@@ -3,7 +3,7 @@ import {
   onAuthStateChanged, 
   User 
 } from 'firebase/auth';
-import { auth, signInWithGoogle, dbService } from './lib/firebase';
+import { auth, signInWithGoogle, dbService, isTeacher } from './lib/firebase';
 import { TestMode, SubmissionStatus, Submission, TestPack } from './types';
 import testPacksData from './testPacks.json';
 
@@ -25,11 +25,18 @@ export default function App() {
     if (!auth) {
       setLoading(false);
       const mock = localStorage.getItem('mock_user');
-      if (mock) setUser(JSON.parse(mock));
+      if (mock) {
+        const u = JSON.parse(mock);
+        setUser(u);
+        if (isTeacher(u)) setView('teacher');
+      }
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      if (u && isTeacher(u) && view === 'dashboard') {
+        setView('teacher');
+      }
       setLoading(false);
     });
     return unsubscribe;

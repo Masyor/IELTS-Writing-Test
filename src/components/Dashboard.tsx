@@ -21,7 +21,7 @@ import {
   Trash2,
   AlertTriangle
 } from 'lucide-react';
-import { dbService } from '@/lib/firebase';
+import { dbService, isTeacher } from '@/lib/firebase';
 import { Submission, TestPack, TestMode, SubmissionStatus } from '@/types';
 import testPacksData from '@/testPacks.json';
 import { format } from 'date-fns';
@@ -197,7 +197,7 @@ export default function Dashboard({ user, onStartTest, onResumeTest, onViewRevie
               </div>
             </DialogContent>
           </Dialog>
-          {user.email === 'matt.longthorne@gmail.com' && (
+          {isTeacher(user) && (
             <Button variant="outline" onClick={onOpenTeacher} className="border-slate-800 text-slate-800 font-semibold gap-2 rounded-xl">
               <UserCircle className="w-4 h-4" />
               Teacher Portal

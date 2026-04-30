@@ -51,17 +51,16 @@ export const TEACHER_CONFIG = {
 
 export const isTeacher = (user: any) => {
   if (!user || !user.email) return false;
+  const email = user.email.toLowerCase();
   
-  // Check whitelist first
-  if (TEACHER_CONFIG.WHITELIST.includes(user.email)) return true;
+  const isWhitelisted = TEACHER_CONFIG.WHITELIST.map(e => e.toLowerCase()).includes(email);
+  const domainMatch = TEACHER_CONFIG.DOMAIN && email.endsWith(`@${TEACHER_CONFIG.DOMAIN.toLowerCase()}`);
+  const hasRole = user.role === 'teacher';
+
+  const result = isWhitelisted || domainMatch || hasRole;
+  console.log(`Teacher check for ${email}: whitelisted=${isWhitelisted}, domain=${domainMatch}, role=${hasRole} -> Result: ${result}`);
   
-  // Check domain wildcard (ensure email is verified in a real env)
-  if (TEACHER_CONFIG.DOMAIN && user.email.endsWith(`@${TEACHER_CONFIG.DOMAIN}`)) {
-    // For safety, you might want to check user.emailVerified === true here
-    return true;
-  }
-  
-  return user.role === 'teacher';
+  return result;
 };
 
 import { getDocFromServer } from 'firebase/firestore';
