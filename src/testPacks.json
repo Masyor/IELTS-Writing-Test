@@ -1,0 +1,28 @@
+[
+  {
+    "id": "pack_1",
+    "title": "IELTS Academic Writing Pack #1",
+    "task1": {
+      "title": "Task 1: Line Graph",
+      "prompt": "The graph below shows the consumption of fish and some different kinds of meat in a European country between 1979 and 2004. Summarize the information by selecting and reporting the main features, and make comparisons where relevant.",
+      "image": "https://images.unsplash.com/photo-1543286386-713bcd53b371?q=80&w=600&auto=format&fit=crop"
+    },
+    "task2": {
+      "title": "Task 2: Education Essay",
+      "prompt": "Some people believe that university education should be free for everyone, while others argue that students should pay for their own education. Discuss both views and give your own opinion. Give reasons for your answer and include any relevant examples from your own knowledge or experience."
+    }
+  },
+  {
+    "id": "pack_2",
+    "title": "IELTS General Writing Pack #1",
+    "task1": {
+      "title": "Task 1: Formal Letter",
+      "prompt": "You recently stayed at a hotel and were unhappy with the service. Write a letter to the hotel manager. In your letter:\n- Explain the details of your stay\n- Describe the problems you encountered\n- Suggest what the manager should do to resolve the situation.",
+      "image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop"
+    },
+    "task2": {
+      "title": "Task 2: Social Media Essay",
+      "prompt": "In many countries, secondary schools are using social media as a tool for teaching. Do the advantages of this trend outweigh the disadvantages? Give reasons for your answer and include any relevant examples from your own knowledge or experience."
+    }
+  }
+]

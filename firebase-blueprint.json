@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "teacher"] },
+        "activeClassCodes": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Class": {
+      "title": "Class",
+      "description": "A group of students managed by a teacher",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["code", "teacherId"]
+    },
+    "TestPack": {
+      "title": "Test Pack",
+      "description": "A collection of IELTS writing tasks",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "task1": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "prompt": { "type": "string" },
+            "image": { "type": "string" }
+          }
+        },
+        "task2": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "prompt": { "type": "string" }
+          }
+        }
+      }
+    },
+    "Submission": {
+      "title": "Submission",
+      "description": "A student's test submission",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "testPackId": { "type": "string" },
+        "mode": { "type": "string", "enum": ["task1", "task2", "both"] },
+        "task1Response": { "type": "string" },
+        "task2Response": { "type": "string" },
+        "task1WordCount": { "type": "number" },
+        "task2WordCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["in-progress", "submitted"] },
+        "classCode": { "type": "string" },
+        "timeLeft": { "type": "number" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "selfAssessment": {
+          "type": "object",
+          "properties": {
+            "task1": { "type": "object" },
+            "task2": { "type": "object" }
+          }
+        }
+      },
+      "required": ["userId", "testPackId", "mode"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Store user profiles"
+    },
+    "/testPacks/{packId}": {
+      "schema": "TestPack",
+      "description": "Store available test packs"
+    },
+    "/submissions/{submissionId}": {
+      "schema": "Submission",
+      "description": "Store all student test submissions"
+    },
+    "/classes/{classId}": {
+      "schema": "Class",
+      "description": "Store class groups"
+    }
+  }
+}

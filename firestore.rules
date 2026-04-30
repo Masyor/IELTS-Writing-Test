@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function isVerified() { return request.auth.token.email_verified == true; }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['uid', 'email']) 
+          && data.uid == request.auth.uid 
+          && data.email is string
+          && (!('activeClassCodes' in data) || data.activeClassCodes is list)
+          && data.keys().size() <= 10;
+      }
+      
+      allow get: if isSignedIn();
+      allow list: if false; // Users shouldn't be listable
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'activeClassCodes', 'role']);
+    }
+
+    // --- Classes Collection ---
+    match /classes/{classId} {
+      function isValidClass(data) {
+        return data.keys().hasAll(['code', 'name', 'teacherId', 'active', 'createdAt'])
+          && data.code is string && data.code.size() == 7
+          && data.name is string && data.name.size() <= 100
+          && data.teacherId == request.auth.uid
+          && data.active is bool
+          && data.createdAt is string;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Teachers need to list their classes
+      allow create: if isSignedIn() && isValidClass(incoming());
+      allow update: if isSignedIn() && existing().teacherId == request.auth.uid && isValidClass(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'active']);
+    }
+
+    // --- Submissions Collection ---
+    match /submissions/{submissionId} {
+      function isValidSubmission(data) {
+        return data.keys().hasAll(['id', 'userId', 'userEmail', 'userName', 'testPackId', 'status', 'startedAt'])
+          && data.userId == request.auth.uid
+          && data.status in ['in-progress', 'submitted']
+          && (!('classCode' in data) || data.classCode is string)
+          && data.keys().size() <= 30;
+      }
+
+      function canTeacherView(submissionData) {
+        return isSignedIn() && 'classCode' in submissionData 
+          && submissionData.classCode is string
+          && exists(/databases/$(database)/documents/classes/$(submissionData.classCode))
+          && get(/databases/$(database)/documents/classes/$(submissionData.classCode)).data.teacherId == request.auth.uid;
+      }
+
+      allow get: if isOwner(existing().userId) || canTeacherView(existing());
+      allow list: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid) || 
+        (canTeacherView(resource.data))
+      );
+      allow create: if isSignedIn() && isValidSubmission(incoming());
+      allow update: if (isOwner(existing().userId) || canTeacherView(existing())) 
+        && isValidSubmission(incoming())
+        && (
+          // Action: Student update their own submission
+          (isOwner(existing().userId) && existing().status == 'in-progress') ||
+          // Action: Teacher review
+          (canTeacherView(existing()) && incoming().diff(existing()).affectedKeys().hasOnly([
+            'teacherAnnotations', 'teacherFeedback', 'teacherReviewedAt', 'studentLastViewedAt'
+          ])) ||
+          // Action: Self assessment
+          (isOwner(existing().userId) && incoming().diff(existing()).affectedKeys().hasOnly(['selfAssessment']))
+        );
+      allow delete: if isOwner(existing().userId);
+    }
+
+    // --- Test Packs (Static config stored in DB) ---
+    match /testPacks/{packId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Read-only from client
+    }
+  }
+}
