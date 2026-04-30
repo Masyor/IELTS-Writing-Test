@@ -60,10 +60,14 @@ service cloud.firestore {
     match /submissions/{submissionId} {
       function isValidSubmission(data) {
         return data.keys().hasAll(['id', 'userId', 'userEmail', 'userName', 'testPackId', 'status', 'startedAt'])
-          && data.userId == request.auth.uid
-          && data.status in ['in-progress', 'submitted']
+          && data.userId is string && data.userId.size() > 0
+          && data.userEmail is string
+          && data.userName is string
+          && data.status is string
           && (!('classCode' in data) || data.classCode is string)
-          && data.keys().size() <= 30;
+          && (!('teacherAnnotations' in data) || data.teacherAnnotations is list)
+          && (!('selfAssessment' in data) || data.selfAssessment is map)
+          && data.keys().size() <= 35;
       }
 
       function canTeacherView(submissionData) {
@@ -78,20 +82,22 @@ service cloud.firestore {
         (resource.data.userId == request.auth.uid) || 
         (canTeacherView(resource.data))
       ));
-      allow create: if isSignedIn() && isValidSubmission(incoming());
+      allow create: if isOwner(incoming().userId) && isValidSubmission(incoming()) && incoming().status == 'in-progress';
       allow update: if (isOwner(existing().userId) || canTeacherView(existing()) || isAdmin()) 
         && isValidSubmission(incoming())
         && (
-          // Action: Student update their own submission
-          (isOwner(existing().userId) && existing().status == 'in-progress') ||
+          // Action: Student update their own submission (save draft or submit)
+          (isOwner(existing().userId) && (existing().status == 'in-progress' || existing().status == 'submitted')) ||
           // Action: Teacher review
-          ((canTeacherView(existing()) || isAdmin()) && incoming().diff(existing()).affectedKeys().hasOnly([
-            'teacherAnnotations', 'teacherFeedback', 'teacherReviewedAt', 'studentLastViewedAt'
-          ])) ||
+          ((canTeacherView(existing()) || isAdmin()) && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'teacherAnnotations', 'teacherFeedback', 'teacherReviewedAt', 'studentLastViewedAt', 'status'
+            ])
+          )) ||
           // Action: Self assessment
           (isOwner(existing().userId) && incoming().diff(existing()).affectedKeys().hasOnly(['selfAssessment']))
         );
-      allow delete: if isOwner(existing().userId) || isAdmin();
+      allow delete: if isAdmin() || (isOwner(existing().userId) && existing().status == 'in-progress');
     }
 
     // --- Test Packs (Static config stored in DB) ---
