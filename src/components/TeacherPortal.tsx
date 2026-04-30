@@ -405,7 +405,7 @@ export default function TeacherPortal({ onBack, user, packs }: TeacherPortalProp
                             <DialogTrigger render={<Button variant="outline" size="sm" className="rounded-lg hover:bg-slate-800 hover:text-white transition-all shadow-sm" />}>
                               Review
                             </DialogTrigger>
-                            <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 flex flex-col rounded-2xl overflow-hidden border-none shadow-2xl">
+                            <DialogContent className="sm:max-w-[95vw] max-w-[95vw] w-full h-[95vh] p-0 flex flex-col rounded-2xl overflow-hidden border-none shadow-2xl">
                               <DialogHeader className="hidden">
                                 <DialogTitle>Review</DialogTitle>
                               </DialogHeader>

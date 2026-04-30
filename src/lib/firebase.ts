@@ -61,6 +61,7 @@ export const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async () => {
   if (!auth) {
+    console.warn("Firebase Auth not initialized. Using mock login.");
     // Mock login for development if firebase setup failed
     const mockUser = {
       uid: 'mock-user-123',
@@ -71,8 +72,21 @@ export const signInWithGoogle = async () => {
     localStorage.setItem('mock_user', JSON.stringify(mockUser));
     return mockUser;
   }
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
+  
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error: any) {
+    console.error("Firebase Auth Error:", error.code, error.message);
+    if (error.code === 'auth/unauthorized-domain') {
+      alert("This domain is not authorized in your Firebase Project. Please add your GitHub Pages URL to 'Authorized domains' in the Firebase Console (Authentication > Settings).");
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      console.log("The user closed the popup before finishing sign in.");
+    } else {
+      alert(`Login failed: ${error.message}`);
+    }
+    throw error;
+  }
 };
 
 // Error handling helper as per instructions
